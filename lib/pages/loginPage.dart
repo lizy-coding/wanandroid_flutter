@@ -6,6 +6,7 @@ import 'package:wanandroid_flutter/entity/user_entity.dart';
 import 'package:wanandroid_flutter/http/httpUtil.dart';
 import 'package:wanandroid_flutter/main.dart';
 import 'package:wanandroid_flutter/res/colors.dart';
+import 'package:wanandroid_flutter/res/strings.dart';
 import 'package:wanandroid_flutter/util/ToastUtil.dart';
 
 class LoginPage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
   bool visible = true;
   GlobalKey<FormState> _key = GlobalKey();
   bool autoValidate = false;
-  String username, password, rePassword;
+  String username = "", password = "", rePassword = "";
 
   @override
   void initState() {
@@ -35,8 +36,8 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
     return MaterialApp(
       theme: ThemeData(
         primaryColor: Theme.of(context).primaryColor,
-        accentColor: Theme.of(context).accentColor,
         primaryColorDark: Theme.of(context).primaryColorDark,
+        colorScheme: Theme.of(context).colorScheme,
       ),
       home: Container(
         decoration: BoxDecoration(
@@ -44,7 +45,7 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).accentColor,
+              Theme.of(context).colorScheme.secondary,
               Theme.of(context).primaryColorDark,
             ],
           ),
@@ -91,7 +92,7 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
                         validator: validateUsername,
                         onSaved: (text) {
                           setState(() {
-                            username = text;
+                            username = text ?? '';
                           });
                         },
                       ),
@@ -107,7 +108,7 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
                         validator: validatePassword,
                         onSaved: (text) {
                           setState(() {
-                            password = text;
+                            password = text ?? '';
                           });
                         },
                       ),
@@ -126,7 +127,7 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
                               validator: visible ? null : validateRePassword,
                               onSaved: (text) {
                                 setState(() {
-                                  rePassword = text;
+                                  rePassword = text ?? '';
                                 });
                               },
                             ),
@@ -184,8 +185,8 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
                 ),
               ),
               onPressed: () {
-                if (_key.currentState.validate()) {
-                  _key.currentState.save();
+                if (_key.currentState!.validate()) {
+                  _key.currentState!.save();
                   print(username + "--" + password + "**" + rePassword);
                   doRequest();
                 } else {
@@ -226,22 +227,22 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
     super.dispose();
   }
 
-  String validateUsername(String value) {
-    if (value.isEmpty)
+  String? validateUsername(String? value) {
+    if (value == null || value.isEmpty)
       return "账号不能为空";
     else if (value.length < 6) return "账号最少6位";
     return null;
   }
 
-  String validatePassword(String value) {
-    if (value.isEmpty)
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty)
       return "密码不能为空";
     else if (value.length < 6) return "密码最少6位";
     return null;
   }
 
-  String validateRePassword(String value) {
-    if (value.isEmpty)
+  String? validateRePassword(String? value) {
+    if (value == null || value.isEmpty)
       return "确认密码不能为空";
     else if (value.length < 6) return "确认密码最少6位";
 //    else if (value != password) return "两次密码不一致";
@@ -256,15 +257,15 @@ class _LoginPagePageState extends State<LoginPage> with SingleTickerProviderStat
       data = {'username': username, 'password': password, 'repassword': rePassword};
 
     var response = await HttpUtil().post(visible ? Api.LOGIN : Api.REGISTER, data: data);
-    Map userMap = json.decode(response.toString());
+    Map<String, dynamic> userMap = json.decode(response.toString());
     var userEntity = UserEntity.fromJson(userMap);
     if (userEntity.errorCode == 0) {
       YToast.show(context: context, msg: visible ? "登录成功~" : "注册成功~");
       //跳转并关闭当前页面
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => MyHomePage()),
-        (route) => route == null,
+        MaterialPageRoute(builder: (context) => MyHomePage(title: YStrings.appName)),
+        (route) => false,
       );
     } else
       YToast.show(context: context, msg: userMap['errorMsg']);

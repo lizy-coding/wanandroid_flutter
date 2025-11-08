@@ -1,45 +1,52 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
-import 'package:share/share.dart';
-import 'package:wanandroid_flutter/res/colors.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-// ignore: must_be_immutable
-class ArticleDetail extends StatelessWidget {
-  String url, title;
+class ArticleDetail extends StatefulWidget {
+  final String title;
+  final String url;
 
-  ArticleDetail({Key key, @required this.title, @required this.url})
+  const ArticleDetail({Key? key, required this.title, required this.url})
       : super(key: key);
 
   @override
+  State<ArticleDetail> createState() => _ArticleDetailState();
+}
+
+class _ArticleDetailState extends State<ArticleDetail> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        primaryColor: Theme.of(context).primaryColor,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).primaryColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.maybePop(context);
+          },
+        ),
+        title: Text(widget.title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: '分享',
+            onPressed: () {
+              Share.share('【${widget.title}】\n${widget.url}');
+            },
+          ),
+        ],
       ),
-      routes: {
-        "/": (_) =>  WebviewScaffold(
-              url: "$url",
-              appBar: AppBar(
-                backgroundColor: Theme.of(context).primaryColor,
-                //返回键 点击关闭
-                leading: IconButton(
-                    icon: Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.maybePop(context);
-                    }),
-                title: Text("$title"),
-                actions: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.share),
-                    tooltip: '分享',
-                    onPressed: () {
-                      Share.share('【$title】\n$url');
-                    },
-                  ),
-                ],
-              ),
-            ),
-      },
+      body: WebViewWidget(controller: _controller),
     );
   }
 }

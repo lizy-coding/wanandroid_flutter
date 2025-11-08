@@ -4,21 +4,21 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:wanandroid_flutter/common/api.dart';
 
 class HttpUtil {
-  static HttpUtil instance;
-  Dio dio;
-  BaseOptions options;
+  static HttpUtil? instance;
+  late Dio dio;
+  late BaseOptions options;
 
   CancelToken cancelToken = CancelToken();
 
   static HttpUtil getInstance() {
     if (null == instance) instance = HttpUtil();
-    return instance;
+    return instance!;
   }
 
   /*
    * config it and create
    */
-  HttpUtil() {
+  HttpUtil()  {
     //BaseOptions、Options、RequestOptions 都可以配置参数，优先级别依次递增，且可以根据优先级别覆盖参数
     options = BaseOptions(
       //请求基地址,可以包含子路径
@@ -55,7 +55,7 @@ class HttpUtil {
       print("响应之前");
       // 如果你想终止请求并触发一个错误，你可以使用 `handler.reject(error)`。
       return handler.next(response); // continue
-    }, onError: (DioError e, ErrorInterceptorHandler handler) {
+    }, onError: (DioException e, ErrorInterceptorHandler handler) {
       print("错误之前");
       // 如果你想完成请求并返回一些自定义数据，你可以使用 `handler.resolve(response)`。
       return handler.next(e);
@@ -76,9 +76,11 @@ class HttpUtil {
 //      response.headers; 响应头
 //      response.request; 请求体
 //      response.statusCode; 状态码
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       print('get error---------$e');
       formatError(e);
+      // 保证非空本地变量在异常时也被赋值
+      response = Response(requestOptions: e.requestOptions, statusCode: e.response?.statusCode, data: e.response?.data);
     }
     return response;
   }
@@ -91,9 +93,11 @@ class HttpUtil {
     try {
       response = await dio.post(url, queryParameters: data, options: options, cancelToken: cancelToken);
       print('post success---------${response.data}');
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       print('post error---------$e');
       formatError(e);
+      // 保证非空本地变量在异常时也被赋值
+      response = Response(requestOptions: e.requestOptions, statusCode: e.response?.statusCode, data: e.response?.data);
     }
     return response;
   }
@@ -109,9 +113,11 @@ class HttpUtil {
         print("$count $total");
       });
       print('downloadFile success---------${response.data}');
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       print('downloadFile error---------$e');
       formatError(e);
+      // 保证非空本地变量在异常时也被赋值
+      response = Response(requestOptions: e.requestOptions, statusCode: e.response?.statusCode, data: e.response?.data);
     }
     return response.data;
   }
@@ -119,20 +125,20 @@ class HttpUtil {
   /*
    * error统一处理
    */
-  void formatError(DioError e) {
-    if (e.type == DioErrorType.connectionTimeout) {
+  void formatError(DioException e) {
+    if (e.type == DioExceptionType.connectionTimeout) {
       // It occurs when url is opened timeout.
       print("连接超时");
-    } else if (e.type == DioErrorType.sendTimeout) {
+    } else if (e.type == DioExceptionType.sendTimeout) {
       // It occurs when url is sent timeout.
       print("请求超时");
-    } else if (e.type == DioErrorType.receiveTimeout) {
+    } else if (e.type == DioExceptionType.receiveTimeout) {
       //It occurs when receiving timeout
       print("响应超时");
-    } else if (e.type == DioErrorType.badResponse) {
+    } else if (e.type == DioExceptionType.badResponse) {
       // When the server response, but with a incorrect status, such as 404, 503...
       print("出现异常");
-    } else if (e.type == DioErrorType.cancel) {
+    } else if (e.type == DioExceptionType.cancel) {
       // When the request is cancelled, dio will throw a error with this type.
       print("请求取消");
     } else {

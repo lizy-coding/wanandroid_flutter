@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_swiper/flutter_swiper.dart';
+import 'package:card_swiper/card_swiper.dart';
 import 'package:wanandroid_flutter/common/api.dart';
 import 'package:wanandroid_flutter/entity/article_entity.dart';
 import 'package:wanandroid_flutter/entity/banner_entity.dart';
@@ -15,18 +15,18 @@ import '../res/colors.dart';
 import 'loginPage.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key key}) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  List<BannerData> bannerDatas = List();
-  List<ArticleDataData> articleDatas = List();
+  List<BannerData> bannerDatas = [];
+  List<ArticleDataData> articleDatas = [];
 
-  EasyRefreshController _easyRefreshController;
-  SwiperController _swiperController;
+  late EasyRefreshController _easyRefreshController;
+  late SwiperController _swiperController;
 
   int _page = 0;
   bool hasMore = true;
@@ -48,17 +48,19 @@ class _HomePageState extends State<HomePage> {
     try {
       //banner
       var bannerResponse = await HttpUtil().get(Api.BANNER);
-      Map bannerMap = json.decode(bannerResponse.toString());
+      Map<String, dynamic> bannerMap = json.decode(bannerResponse.toString());
       var bannerEntity = BannerEntity.fromJson(bannerMap);
 
       //article
-      var articleResponse = await HttpUtil().get(Api.ARTICLE_LIST + "$_page/json");
-      Map articleMap = json.decode(articleResponse.toString());
+      var articleResponse =
+          await HttpUtil().get(Api.ARTICLE_LIST + "$_page/json");
+      Map<String, dynamic> articleMap = json.decode(articleResponse.toString());
       var articleEntity = ArticleEntity.fromJson(articleMap);
 
       setState(() {
+        // bannerEntity.data 是非空 List，移除无效的空判默认值
         bannerDatas = bannerEntity.data;
-        articleDatas = articleEntity.data.datas;
+        articleDatas = articleEntity.data?.datas ?? [];
       });
 
       _swiperController.startAutoplay();
@@ -105,17 +107,18 @@ class _HomePageState extends State<HomePage> {
             });
             getMoreData();
 
-            _easyRefreshController.finishLoad(hasMore ? IndicatorResult.success : IndicatorResult.noMore);
+            _easyRefreshController.finishLoad(
+                hasMore ? IndicatorResult.success : IndicatorResult.noMore);
           });
         },
-
         childBuilder: (context, physics) {
           return CustomScrollView(
             physics: physics,
             slivers: [
               SliverAppBar(
                 backgroundColor: Theme.of(context).primaryColor,
-                expandedHeight: MediaQuery.of(context).size.width / 1.8 * 0.8 + 20, // +20 是上下的padding值
+                expandedHeight: MediaQuery.of(context).size.width / 1.8 * 0.8 +
+                    20, // +20 是上下的padding值
                 pinned: false,
                 flexibleSpace: FlexibleSpaceBar(
                   background: getBanner(),
@@ -148,7 +151,7 @@ class _HomePageState extends State<HomePage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular((10.0)), // 圆角度
               image: DecorationImage(
-                image: NetworkImage(bannerDatas[index].imagePath),
+                image: NetworkImage(bannerDatas[index].imagePath ?? ''),
                 fit: BoxFit.fill,
               ),
             ),
@@ -187,30 +190,30 @@ class _HomePageState extends State<HomePage> {
     // print("debug  <<<<<");
 
     // 防止接口慢的情况
-    if (length == 0) return null;
+    if (length == 0) return const SizedBox.shrink();
 
     return GestureDetector(
       child: Container(
           padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
           child: ListTile(
             leading: IconButton(
-              icon: articleDatas != null && articleDatas[i].collect
+              icon: articleDatas[i].collect ?? false
                   ? Icon(
                       Icons.favorite,
                       color: Theme.of(context).primaryColor,
                     )
-                  : Icon(Icons.favorite_border),
+                  : const Icon(Icons.favorite_border),
               tooltip: '收藏',
               onPressed: () {
-                if (articleDatas[i].collect) {
-                  cancelCollect(articleDatas[i].id);
+                if (articleDatas[i].collect ?? false) {
+                  cancelCollect(articleDatas[i].id ?? 0);
                 } else {
-                  addCollect(articleDatas[i].id);
+                  addCollect(articleDatas[i].id ?? 0);
                 }
               },
             ),
             title: Text(
-              articleDatas[i].title,
+              articleDatas[i].title ?? '',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -228,14 +231,17 @@ class _HomePageState extends State<HomePage> {
                         ),
                         borderRadius: BorderRadius.circular((20.0)), // 圆角度
                       ),
-                      child: Text(articleDatas[i].superChapterName,
-                          style: TextStyle(color: Theme.of(context).primaryColor),
+                      child: Text(articleDatas[i].superChapterName ?? '',
+                          style:
+                              TextStyle(color: Theme.of(context).primaryColor),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1)),
                   Container(
-                    margin: EdgeInsets.only(left: 10),
-                    child: Text(articleDatas[i].author),
-                  ),
+                      margin: EdgeInsets.only(left: 10),
+                      child: Text(articleDatas[i].author ?? '',
+                          style: TextStyle(color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1)),
                 ],
               ),
             ),
@@ -246,7 +252,9 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArticleDetail(title: articleDatas[i].title, url: articleDatas[i].link),
+            builder: (context) => ArticleDetail(
+                title: articleDatas[i].title ?? '',
+                url: articleDatas[i].link ?? ''),
           ),
         );
       },
@@ -255,7 +263,7 @@ class _HomePageState extends State<HomePage> {
 
   Future addCollect(int id) async {
     var collectResponse = await HttpUtil().post(Api.COLLECT + '$id/json');
-    Map map = json.decode(collectResponse.toString());
+    Map<String, dynamic> map = json.decode(collectResponse.toString());
     var entity = CommonEntity.fromJson(map);
     if (entity.errorCode == -1001) {
       YToast.showBottom(context: context, msg: entity.errorMsg);
@@ -270,11 +278,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future cancelCollect(int id) async {
-    var collectResponse = await HttpUtil().post(Api.UN_COLLECT_ORIGIN_ID + '$id/json');
-    Map map = json.decode(collectResponse.toString());
+    var collectResponse =
+        await HttpUtil().post(Api.UN_COLLECT_ORIGIN_ID + '$id/json');
+    Map<String, dynamic> map = json.decode(collectResponse.toString());
     var entity = CommonEntity.fromJson(map);
     if (entity.errorCode == -1001) {
-      YToast.show(context: context, msg: entity.errorMsg);
+      // errorMsg 在 CommonEntity 中是非空字符串，移除无效的空判
+      YToast.show(context: context, msg: entity.errorMsg);  
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
@@ -287,11 +297,11 @@ class _HomePageState extends State<HomePage> {
 
   Future getMoreData() async {
     var response = await HttpUtil().get(Api.ARTICLE_LIST + "$_page/json");
-    Map map = json.decode(response.toString());
+    Map<String, dynamic> map = json.decode(response.toString());
     var articleEntity = ArticleEntity.fromJson(map);
     setState(() {
-      articleDatas.addAll(articleEntity.data.datas);
-      if (articleEntity.data.datas.length < 10) {
+      articleDatas.addAll(articleEntity.data?.datas ?? []);
+      if ((articleEntity.data?.datas.length ?? 0) < 10) {
         hasMore = false;
       }
     });

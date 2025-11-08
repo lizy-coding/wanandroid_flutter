@@ -17,11 +17,11 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin {
-  TabController _controller; //tab控制器
+  late TabController _controller; //tab控制器
   int _currentIndex = 0; //选中下标
 
-  List<ProjectData> _datas = List(); //tab集合
-  List<ProjectListDataData> _listDatas = List(); //内容集合
+  List<ProjectData> _datas = []; //tab集合
+  List<ProjectListDataData> _listDatas = []; //内容集合
 
   int _page = 1; //看文档时要注意page是从0还是1开始
 
@@ -36,10 +36,11 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
   void getHttp() async {
     try {
       var response = await HttpUtil().get(Api.PROJECT);
-      Map userMap = json.decode(response.toString());
+      Map<String, dynamic> userMap = json.decode(response.toString());
       var projectEntity = ProjectEntity.fromJson(userMap);
 
       setState(() {
+        // projectEntity.data 是非空的 List，去掉无效的空判默认值
         _datas = projectEntity.data;
         _controller = TabController(vsync: this, length: _datas.length);
       });
@@ -57,7 +58,8 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
   /// tab改变监听
   ///
   _onTabChanged() {
-    if (_controller.index.toDouble() == _controller.animation.value) {
+    final animValue = _controller.animation?.value;
+    if (_controller.index.toDouble() == (animValue ?? _controller.index.toDouble())  ) {
       //赋值 并更新数据
       this.setState(() {
         _currentIndex = _controller.index;
@@ -71,13 +73,13 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
   ///
   void getDetail() async {
     try {
-      var data = {"cid": _datas[_currentIndex].id};
+      var data = {"cid": _datas[_currentIndex].id ?? 0};
       var response = await HttpUtil().get(Api.PROJECT_LIST + "$_page/json", data: data);
-      Map userMap = json.decode(response.toString());
+      Map<String, dynamic> userMap = json.decode(response.toString());
       var projectListEntity = ProjectListEntity.fromJson(userMap);
 
       setState(() {
-        _listDatas = projectListEntity.data.datas;
+        _listDatas = projectListEntity.data?.datas ?? [];
       });
     } catch (e) {
       print(e);
@@ -167,7 +169,7 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
               children: <Widget>[
                 Expanded(
                   flex: 2,
-                  child: Image.network(_listDatas[i].envelopePic),
+                  child: Image.network(_listDatas[i].envelopePic ?? ''),
                 ),
                 Expanded(
                   flex: 5,
@@ -178,7 +180,7 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          _listDatas[i].title,
+                          _listDatas[i].title ?? '',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -187,7 +189,7 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
                       Padding(
                         padding: EdgeInsets.all(10),
                         child: Text(
-                          _listDatas[i].desc,
+                          _listDatas[i].desc ?? '',
                           style: TextStyle(fontSize: 14, color: YColors.color_666),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -202,7 +204,7 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
                               child: Padding(
                                 padding: EdgeInsets.all(10),
                                 child: Text(
-                                  _listDatas[i].niceDate,
+                                  _listDatas[i].niceDate ?? '',
                                   style: TextStyle(fontSize: 14),
                                 ),
                               ),
@@ -210,7 +212,7 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
                             Padding(
                               padding: EdgeInsets.all(10),
                               child: Text(
-                                _listDatas[i].author,
+                                _listDatas[i].author ?? '',
                                 style: TextStyle(fontSize: 14),
                                 textAlign: TextAlign.right,
                               ),
@@ -231,7 +233,7 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArticleDetail(title: _listDatas[i].title, url: _listDatas[i].link),
+            builder: (context) => ArticleDetail(title: _listDatas[i].title ?? '', url: _listDatas[i].link ?? ''),
           ),
         );
       },
@@ -241,10 +243,10 @@ class _ProjectPageState extends State<ProjectPage> with TickerProviderStateMixin
   Future getMoreData() async {
     var data = {"cid": _datas[_currentIndex].id};
     var response = await HttpUtil().get(Api.PROJECT_LIST + "$_page/json", data: data);
-    Map userMap = json.decode(response.toString());
+    Map<String, dynamic> userMap = json.decode(response.toString());
     var projectListEntity = ProjectListEntity.fromJson(userMap);
     setState(() {
-      _listDatas.addAll(projectListEntity.data.datas);
+      _listDatas.addAll(projectListEntity.data?.datas ?? []);
     });
   }
 

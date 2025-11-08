@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
-import 'package:share/share.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanandroid_flutter/pages/CollectPage.dart';
 import 'package:wanandroid_flutter/pages/about.dart';
@@ -37,7 +37,7 @@ void main() async {
 
 Future<int> getTheme() async {
   SharedPreferences sp = await SharedPreferences.getInstance();
-  int themeIndex = sp.getInt(YColors.themeIndexKey);
+  int? themeIndex = sp.getInt(YColors.themeIndexKey);
   return null == themeIndex ? 0 : themeIndex;
 }
 
@@ -45,12 +45,12 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   final int themeIndex;
 
-  MyApp(this.themeIndex);
+  const MyApp(this.themeIndex);
 
   @override
   Widget build(BuildContext context) {
     // Calls `context.watch` to make [Count] rebuild when [Counter] changes.
-    final int themeValue = context.watch<ThemeProvide>().value;
+    final int? themeValue = context.watch<ThemeProvide>().value;
 
     return MaterialApp(
       title: YStrings.appName,
@@ -59,11 +59,10 @@ class MyApp extends StatelessWidget {
           //除了primaryColor，还有brightness、iconTheme、textTheme等等可以设置
           primaryColor: YColors.themeColor[themeValue != null ? themeValue : themeIndex]["primaryColor"],
           primaryColorDark: YColors.themeColor[themeValue != null ? themeValue : themeIndex]["primaryColorDark"],
-          accentColor: YColors.themeColor[themeValue != null ? themeValue : themeIndex]["colorAccent"]
+          colorScheme: ThemeData().colorScheme.copyWith(
+            secondary: YColors.themeColor[themeValue != null ? themeValue : themeIndex]["colorAccent"],
+          ),
 
-          // primaryColor: YColors.colorPrimary,
-          // primaryColorDark: YColors.colorPrimaryDark,
-          // accentColor: YColors.colorAccent,
           // dividerColor: YColors.dividerColor,
           ),
       home: MyHomePage(title: YStrings.appName),
@@ -72,7 +71,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 

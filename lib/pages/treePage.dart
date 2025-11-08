@@ -17,7 +17,7 @@ class TreePage extends StatefulWidget {
 }
 
 class _TreePageState extends State<TreePage> {
-  List<TreeData> _datas = List();
+  List<TreeData> _datas = [];
   ScrollController _scrollController = ScrollController();
   int _panelIndex = 0; //展开下标
   List<IconData> _icons = [
@@ -48,7 +48,7 @@ class _TreePageState extends State<TreePage> {
   void getHttp() async {
     try {
       var response = await HttpUtil().get(Api.TREE);
-      Map userMap = json.decode(response.toString());
+      Map<String, dynamic> userMap = json.decode(response.toString());
       var treeEntity = TreeEntity.fromJson(userMap);
 
       //遍历赋值isExpanded标识，默认全部合并
@@ -92,7 +92,7 @@ class _TreePageState extends State<TreePage> {
                   return ListTile(
                     contentPadding: EdgeInsets.all(10.0),
                     title: Text(
-                      treeData.name,
+                      treeData.name ?? '',
                       style: TextStyle(color: Theme.of(context).primaryColor),
                     ),
                     //取随机icon
@@ -111,7 +111,7 @@ class _TreePageState extends State<TreePage> {
                   ),
                 ),
                 //是否展开
-                isExpanded: treeData.isExpanded,
+                isExpanded: treeData.isExpanded ?? false,
               );
             }).toList(),
           ),
@@ -134,7 +134,7 @@ class _TreePageState extends State<TreePage> {
         padding: EdgeInsets.symmetric(horizontal: 5.0),
         child: ListTile(
           title: Text(
-            treeData.children[i].name,
+            treeData.children[i].name ?? '',
             style: TextStyle(color: YColors.color_999),
           ),
           trailing: Icon(

@@ -7,14 +7,14 @@ import 'package:fluttertoast/fluttertoast.dart';
 ///
 class YToast {
   static show({
-    @required BuildContext context,
-    @required String msg,
-    Toast toastLength,
+    required BuildContext context,
+    required String msg,
+    Toast? toastLength,
     int timeInSecForIos = 1,
     double fontSize = 16.0,
-    ToastGravity gravity,
-    Color backgroundColor,
-    Color textColor,
+    ToastGravity? gravity,
+    Color? backgroundColor,
+    Color? textColor,
   }) {
     Fluttertoast.showToast(
         msg: msg,
@@ -27,14 +27,14 @@ class YToast {
   }
 
   static showBottom({
-    @required BuildContext context,
-    @required String msg,
-    Toast toastLength,
+    required BuildContext context,
+    required String msg,
+    Toast? toastLength,
     int timeInSecForIos = 1,
     double fontSize = 16.0,
-    ToastGravity gravity,
-    Color backgroundColor,
-    Color textColor,
+    ToastGravity? gravity,
+    Color? backgroundColor,
+    Color? textColor,
   }) {
     Fluttertoast.showToast(
         msg: msg,

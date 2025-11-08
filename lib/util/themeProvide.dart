@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ThemeProvide with ChangeNotifier {
-  int _themeIndex;
+  int? _themeIndex;
 
-  int get value => _themeIndex;
+  int? get value => _themeIndex;
 
   ThemeProvide();
 

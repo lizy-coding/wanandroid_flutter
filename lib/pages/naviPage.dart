@@ -15,9 +15,9 @@ class NaviPage extends StatefulWidget {
 }
 
 class _NaviPageState extends State<NaviPage> {
-  List<NaviData> _datas = List(); //一级分类集合
-  List<NaviDataArticle> articles = List(); //二级分类集合
-  int index; //一级分类下标
+  List<NaviData> _datas = []; //一级分类集合
+  List<NaviDataArticle> articles = []; //二级分类集合
+  int index = 0; //一级分类下标
 
   @override
   void initState() {
@@ -28,7 +28,7 @@ class _NaviPageState extends State<NaviPage> {
   void getHttp() async {
     try {
       var response = await HttpUtil().get(Api.NAVI);
-      Map userMap = json.decode(response.toString());
+      Map<String, dynamic> userMap = json.decode(response.toString());
       var naviEntity = NaviEntity.fromJson(userMap);
 
       /// 初始化
@@ -92,7 +92,7 @@ class _NaviPageState extends State<NaviPage> {
           ),
         ),
         child: Text(
-          _datas[i].name,
+          _datas[i].name ?? '',
           style: TextStyle(
             color: index == i ? textColor : YColors.color_666,
             fontWeight: index == i ? FontWeight.w600 : FontWeight.w400,
@@ -122,7 +122,7 @@ class _NaviPageState extends State<NaviPage> {
           return ActionChip(
             //标签文字
             label: Text(
-              articles[index].title,
+              articles[index].title ?? '',
               style: TextStyle(fontSize: 16, color: YColors.color_666),
             ),
             //点击事件
@@ -131,7 +131,7 @@ class _NaviPageState extends State<NaviPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ArticleDetail(
-                      title: articles[index].title, url: articles[index].link),
+                      title: articles[index].title ?? '', url: articles[index].link ?? ''),
                 ),
               );
             },

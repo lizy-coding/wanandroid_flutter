@@ -19,7 +19,7 @@ class CollectPage extends StatefulWidget {
 }
 
 class _CollectPagePageState extends State<CollectPage> {
-  List<ArticleDataData> articleDatas = List();
+  List<ArticleDataData> articleDatas = [];
   int _page = 0;
 
   @override
@@ -31,11 +31,11 @@ class _CollectPagePageState extends State<CollectPage> {
   void getHttp() async {
     try {
       var response = await HttpUtil().get(Api.COLLECT_LIST + "$_page/json");
-      Map map = json.decode(response.toString());
+      Map<String, dynamic> map = json.decode(response.toString());
       var articleEntity = ArticleEntity.fromJson(map);
 
       if (articleEntity.errorCode == -1001) {
-        YToast.showBottom(context: context, msg: articleEntity.errorMsg);
+        YToast.showBottom(context: context, msg: articleEntity.errorMsg ?? "");
         Navigator.of(context).pop();
         Navigator.push(
           context,
@@ -43,7 +43,7 @@ class _CollectPagePageState extends State<CollectPage> {
         );
       } else {
         setState(() {
-          articleDatas = articleEntity.data.datas;
+          articleDatas = articleEntity.data?.datas ?? [];
         });
       }
     } catch (e) {
@@ -96,14 +96,14 @@ class _CollectPagePageState extends State<CollectPage> {
       background: Container(color: Theme.of(context).primaryColor),
       // Each Dismissible must contain a Key. Keys allow Flutter to
       // uniquely identify Widgets.
-      key: Key(item.title),
+      key: Key(item.title ?? ""),
       // We also need to provide a function that will tell our app
       // what to do after an item has been swiped away.
       onDismissed: (direction) {
         // Remove the item from our data source
         articleDatas.removeAt(index);
 
-        cancelCollect(item.id, item.originId == null ? -1 : item.originId);
+        cancelCollect(item.id ?? 0, item.originId ?? -1);
 
         // Show a snackbar! This snackbar could also contain "Undo" actions.
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("已移除")));
@@ -118,7 +118,7 @@ class _CollectPagePageState extends State<CollectPage> {
           padding: EdgeInsets.all(10.0),
           child: ListTile(
             title: Text(
-              articleDatas[i].title,
+              articleDatas[i].title ?? "",
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -136,13 +136,13 @@ class _CollectPagePageState extends State<CollectPage> {
                       borderRadius: BorderRadius.circular((20.0)), // 圆角度
                     ),
                     child: Text(
-                      articleDatas[i].chapterName,
+                      articleDatas[i].chapterName ?? "",
                       style: TextStyle(color: Theme.of(context).primaryColor),
                     ),
                   ),
                   Container(
                     margin: EdgeInsets.only(left: 15),
-                    child: Text(articleDatas[i].author),
+                    child: Text(articleDatas[i].author ?? ""),
                   ),
                 ],
               ),
@@ -154,8 +154,8 @@ class _CollectPagePageState extends State<CollectPage> {
           context,
           MaterialPageRoute(
             builder: (context) => ArticleDetail(
-              title: articleDatas[i].title,
-              url: articleDatas[i].link,
+              title: articleDatas[i].title ?? "",
+              url: articleDatas[i].link ?? "",
             ),
           ),
         );
@@ -171,9 +171,10 @@ class _CollectPagePageState extends State<CollectPage> {
   Future cancelCollect(int id, int originId) async {
     var data = {'originId': originId};
     var collectResponse = await HttpUtil().post(Api.UN_COLLECT + '$id/json', data: data);
-    Map map = json.decode(collectResponse.toString());
+    Map<String, dynamic> map = json.decode(collectResponse.toString());
     var entity = CommonEntity.fromJson(map);
     if (entity.errorCode == -1001) {
+      // errorMsg 在 CommonEntity 中是非空字符串，移除无效的空判
       YToast.show(context: context, msg: entity.errorMsg);
     } else {
       //getHttp();
@@ -182,10 +183,10 @@ class _CollectPagePageState extends State<CollectPage> {
 
   Future getMoreData() async {
     var response = await HttpUtil().get(Api.COLLECT_LIST + "$_page/json");
-    Map map = json.decode(response.toString());
+    Map<String, dynamic> map = json.decode(response.toString());
     var articleEntity = ArticleEntity.fromJson(map);
     setState(() {
-      articleDatas.addAll(articleEntity.data.datas);
+      articleDatas.addAll(articleEntity.data?.datas ?? []);
     });
   }
 }

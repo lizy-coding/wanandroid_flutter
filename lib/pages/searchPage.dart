@@ -10,13 +10,13 @@ import 'package:wanandroid_flutter/res/colors.dart';
 
 import 'articleDetail.dart';
 
-List<ArticleDataData> articleDatas = List();
-List<HotKeyData> hotKeyDatas = List();
+List<ArticleDataData> articleDatas = [];
+List<HotKeyData> hotKeyDatas = [];
 String key = "";
 var pageContext;
 
 class SearchPage extends StatefulWidget {
-  SearchPage({Key key}) : super(key: key);
+  const SearchPage({Key? key}) : super(key: key);
 
   @override
   _SearchPageState createState() => _SearchPageState();
@@ -33,10 +33,11 @@ class _SearchPageState extends State<SearchPage> {
   void getHttpByHoyKey() async {
     try {
       var hotKeyResponse = await HttpUtil().post(Api.HOT_KEY);
-      Map hotKeyMap = json.decode(hotKeyResponse.toString());
+      Map<String, dynamic> hotKeyMap = json.decode(hotKeyResponse.toString());
       var hotKeyEntity = HotKeyEntity.fromJson(hotKeyMap);
 
       setState(() {
+        // hotKeyEntity.data 是非空的 List，移除无效的空判默认值
         hotKeyDatas = hotKeyEntity.data;
       });
 
@@ -60,11 +61,11 @@ class _SearchPageState extends State<SearchPage> {
     try {
       var data = {'k': key};
       var articleResponse = await HttpUtil().post(Api.QUERY, data: data);
-      Map articleMap = json.decode(articleResponse.toString());
+      Map<String, dynamic> articleMap = json.decode(articleResponse.toString());
       var articleEntity = ArticleEntity.fromJson(articleMap);
 
       setState(() {
-        articleDatas = articleEntity.data.datas;
+        articleDatas = articleEntity.data?.datas ?? [];
       });
     } catch (e) {
       print(e);
@@ -73,7 +74,6 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class MySearchDelegate extends SearchDelegate<String> {
-  BuildContext get context => context;
 
   MySearchDelegate(
     String hintText,
@@ -98,9 +98,9 @@ class MySearchDelegate extends SearchDelegate<String> {
         onPressed: () async {
           var data = {'k': query};
           var articleResponse = await HttpUtil().post(Api.QUERY, data: data);
-          Map articleMap = json.decode(articleResponse.toString());
+          Map<String, dynamic> articleMap = json.decode(articleResponse.toString());
           var articleEntity = ArticleEntity.fromJson(articleMap);
-          articleDatas = articleEntity.data.datas;
+          articleDatas = articleEntity.data?.datas ?? [];
 
           showResults(context);
         },
@@ -125,7 +125,7 @@ class MySearchDelegate extends SearchDelegate<String> {
         progress: transitionAnimation,
       ),
       onPressed: () {
-        close(context, null);
+        close(context, "");
         Navigator.of(pageContext).pop();
       },
     );
@@ -148,7 +148,9 @@ class MySearchDelegate extends SearchDelegate<String> {
                 padding: EdgeInsets.all(10.0),
                 child: ListTile(
                   title: Text(
-                    articleDatas[position].title.replaceAll("<em class='highlight'>", "【").replaceAll("<\/em>", "】"),
+                    (articleDatas[position].title ?? '')
+                        .replaceAll("<em class='highlight'>", "【")
+                        .replaceAll("<\/em>", "】"),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.black54),
@@ -165,7 +167,7 @@ class MySearchDelegate extends SearchDelegate<String> {
                             borderRadius: BorderRadius.circular((20.0)), // 圆角度
                           ),
                           child: Text(
-                            articleDatas[position].superChapterName,
+                            articleDatas[position].superChapterName ?? '',
                             style: TextStyle(
                               color: Theme.of(context).primaryColor,
                             ),
@@ -175,7 +177,7 @@ class MySearchDelegate extends SearchDelegate<String> {
                         ),
                         Container(
                           margin: EdgeInsets.only(left: 15),
-                          child: Text(articleDatas[position].author),
+                          child: Text(articleDatas[position].author ?? ''),
                         ),
                       ],
                     ),
@@ -187,11 +189,11 @@ class MySearchDelegate extends SearchDelegate<String> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ArticleDetail(
-                      title: articleDatas[position]
-                          .title
+                      title: (articleDatas[position]
+                          .title ?? '')
                           .replaceAll("<em class='highlight'>", "")
                           .replaceAll("<\/em>", ""),
-                      url: articleDatas[position].link),
+                      url: articleDatas[position].link ?? ''),
                 ),
               );
             },
@@ -226,7 +228,7 @@ class MySearchDelegate extends SearchDelegate<String> {
                 return ActionChip(
                   //标签文字
                   label: Text(
-                    hotKeyDatas[index].name,
+                    hotKeyDatas[index].name ?? '',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white,
@@ -234,16 +236,16 @@ class MySearchDelegate extends SearchDelegate<String> {
                   ),
                   //点击事件
                   onPressed: () async {
-                    query = hotKeyDatas[index].name;
+                    query = hotKeyDatas[index].name ?? '';
                     key = query;
 
                     /// 请求数据
                     var data = {'k': key};
                     var articleResponse = await HttpUtil().post(Api.QUERY, data: data);
-                    Map articleMap = json.decode(articleResponse.toString());
+                    Map<String, dynamic> articleMap = json.decode(articleResponse.toString());
                     var articleEntity = ArticleEntity.fromJson(articleMap);
 
-                    articleDatas = articleEntity.data.datas;
+                    articleDatas = articleEntity.data?.datas ?? [];
 
                     /// 显示结果
                     showResults(context);
@@ -270,34 +272,16 @@ class MySearchDelegate extends SearchDelegate<String> {
   /// https://github.com/flutter/flutter/issues/48857
   @override
   ThemeData appBarTheme(BuildContext context) {
-
-    assert(context != null);
-    final ThemeData theme = Theme.of(context);
-    assert(theme != null);
+      final ThemeData theme = Theme.of(context);
     return theme.copyWith(
       //主题色
       primaryColor: theme.primaryColor,
       //图标颜色
       primaryIconTheme: theme.primaryIconTheme.copyWith(color: Colors.white),
-      //状态栏
-      primaryColorBrightness: Brightness.dark,
-      //文字主题
-      textTheme: theme.textTheme.copyWith(
-        // 不生效
-        // subtitle1: TextStyle(color: Colors.red, fontSize: 20.0),
-        headline1: theme.textTheme.headline1.copyWith(color: theme.primaryTextTheme.headline1.color),
-        subtitle1: TextStyle(
-          color: Colors.red,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
-      ),
-
-      // 不生效
-      backgroundColor: theme.primaryColor,
-
+      // AppBar主题颜色
+      appBarTheme: theme.appBarTheme.copyWith(backgroundColor: theme.primaryColor),
       // hintStyle
-      inputDecorationTheme:  InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         hintStyle: TextStyle(color: Colors.white60),
         border: InputBorder.none,
       ),

@@ -14,7 +14,7 @@ description: wanandroid_flutter
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -22,7 +22,6 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
 
   # https://github.com/PonnamKarthik/FlutterToast
   fluttertoast: ^8.2.1
@@ -33,16 +32,14 @@ dependencies:
   # https://pub.dev/packages/dio_cookie_manager
   dio_cookie_manager: ^2.0.0
 
-  # https://pub.dev/packages/flutter_webview_plugin#-readme-tab
-#  flutter_webview_/\plugin: ^0.4.0
-  flutter_webview_plugin:
-    git: https://github.com/nuc134r/flutter_webview_plugin.git
+  # WebView (null-safety)
+  webview_flutter: ^4.8.0
 
-  # https://github.com/best-flutter/flutter_swiper
-  flutter_swiper: ^1.1.6
+  # Swiper (null-safety replacement)
+  card_swiper: ^3.0.1
 
-  # https://github.com/flutter/plugins/tree/master/packages/share
-  share: ^0.6.1+1
+  # Share (null-safety replacement)
+  share_plus: ^10.0.0
 
   # https://github.com/google/flutter-provide
 #  provide: ^1.0.2

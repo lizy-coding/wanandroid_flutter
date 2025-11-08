@@ -16,7 +16,7 @@ class TreeDetailPage extends StatefulWidget {
   final int panelIndex; //一级分类选中下标
   final int index; //二级分类选中下标
 
-  TreeDetailPage({Key key, @required this.panelIndex, @required this.index}) : super(key: key);
+  const TreeDetailPage({Key? key, required this.panelIndex, required this.index}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -25,12 +25,12 @@ class TreeDetailPage extends StatefulWidget {
 }
 
 class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStateMixin {
-  TabController _controller; //tab控制器
+  late TabController _controller; //tab控制器
   int _currentIndex = 0; //选中下标
 
-  List<TreeData> _datas = List(); //一级分类集合
-  List<TreeDatachild> _tabDatas = List(); //二级分类 即 tab集合
-  List<ArticleDataData> articleDatas = List(); //内容集合
+  List<TreeData> _datas = []; //一级分类集合
+  List<TreeDatachild> _tabDatas = []; //二级分类 即 tab集合
+  List<ArticleDataData> articleDatas = []; //内容集合
 
   String _title = "标题";
 
@@ -46,16 +46,17 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
 
   Future getHttp() async {
     var response = await HttpUtil().get(Api.TREE);
-    Map userMap = json.decode(response.toString());
+    Map<String, dynamic> userMap = json.decode(response.toString());
     var treeEntity = TreeEntity.fromJson(userMap);
 
     setState(() {
+      // treeEntity.data 和 children 都是非空 List，去掉无效的空判默认值
       _datas = treeEntity.data;
-      _tabDatas = _datas[widget.panelIndex].children;
+      _tabDatas = (_datas.isNotEmpty ? _datas[widget.panelIndex].children : []);
       _controller = TabController(vsync: this, length: _tabDatas.length);
 
       _currentIndex = widget.index;
-      _title = _datas[widget.panelIndex].name;
+      _title = (_datas.isNotEmpty ? (_datas[widget.panelIndex].name ?? '') : '');
     });
 
     //controller添加监听
@@ -70,7 +71,8 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
   /// 滑动切换_controller.indexIsChanging一直返回false，所以这种判断方式不适用了
   /// 修改如下
   _onTabChanged() {
-    if (_controller.index.toDouble() == _controller.animation.value) {
+    final animValue = _controller.animation?.value;
+    if (_controller.index.toDouble() == (animValue ?? _controller.index.toDouble())) {
       //赋值 并更新数据
       this.setState(() {
         _currentIndex = _controller.index;
@@ -85,16 +87,17 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
     this.setState(() {
       _page = 0;
     });
-    var data = {"cid": _tabDatas[_currentIndex].id};
+    var data = {"cid": _tabDatas[_currentIndex].id ?? 0};
     var response = await HttpUtil().get(Api.ARTICLE_LIST + "$_page/json", data: data);
-    Map articleMap = json.decode(response.toString());
+    Map<String, dynamic> articleMap = json.decode(response.toString());
     var articleEntity = ArticleEntity.fromJson(articleMap);
 
-    if (0 == articleEntity.data.datas.length) {
+    final datas = articleEntity.data?.datas ?? [];
+    if (datas.isEmpty) {
       YToast.show(context: context, msg: "数据为空~");
     } else {
       setState(() {
-        articleDatas = articleEntity.data.datas;
+        articleDatas = datas;
       });
     }
   }
@@ -117,7 +120,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
           indicatorSize: TabBarIndicatorSize.label,
           tabs: _tabDatas.map((TreeDatachild choice) {
             return Tab(
-              text: choice.name,
+              text: choice.name ?? '',
             );
           }).toList(),
           onTap: (int i) {
@@ -127,10 +130,10 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
       ),
       body: TabBarView(
         controller: _controller,
-        children: _tabDatas.map((TreeDatachild choice) {
-          return EasyRefresh(
-            header: TaurusHeader(),
-            footer: TaurusFooter(),
+          children: _tabDatas.map((TreeDatachild choice) {
+            return EasyRefresh(
+              header: TaurusHeader(),
+              footer: TaurusFooter(),
             onRefresh: () async {
               await Future.delayed(Duration(seconds: 1), () {
                 setState(() {
@@ -167,7 +170,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
         child: ListTile(
           leading: IconButton(
-            icon: articleDatas[i].collect
+            icon: (articleDatas[i].collect == true)
                 ? Icon(
                     Icons.favorite,
                     color: Theme.of(context).primaryColor,
@@ -175,15 +178,15 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
                 : Icon(Icons.favorite_border),
             tooltip: '收藏',
             onPressed: () {
-              if (articleDatas[i].collect) {
-                cancelCollect(articleDatas[i].id);
+              if (articleDatas[i].collect == true) {
+                cancelCollect(articleDatas[i].id ?? 0);
               } else {
-                addCollect(articleDatas[i].id);
+                addCollect(articleDatas[i].id ?? 0);
               }
             },
           ),
           title: Text(
-            articleDatas[i].title,
+            articleDatas[i].title ?? '',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -201,13 +204,13 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
                     borderRadius: BorderRadius.circular((20.0)), // 圆角度
                   ),
                   child: Text(
-                    articleDatas[i].superChapterName,
+                    articleDatas[i].superChapterName ?? '',
                     style: TextStyle(color: Theme.of(context).primaryColor),
                   ),
                 ),
                 Container(
                   margin: EdgeInsets.only(left: 10),
-                  child: Text(articleDatas[i].author),
+                  child: Text(articleDatas[i].author ?? ''),
                 ),
               ],
             ),
@@ -219,7 +222,10 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArticleDetail(title: articleDatas[i].title, url: articleDatas[i].link),
+            builder: (context) => ArticleDetail(
+              title: articleDatas[i].title ?? '',
+              url: articleDatas[i].link ?? '',
+            ),
           ),
         );
       },
@@ -228,7 +234,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
 
   Future addCollect(int id) async {
     var collectResponse = await HttpUtil().post(Api.COLLECT + '$id/json');
-    Map map = json.decode(collectResponse.toString());
+    Map<String, dynamic> map = json.decode(collectResponse.toString());
     var entity = CommonEntity.fromJson(map);
     if (entity.errorCode == -1001) {
       YToast.show(context: context, msg: entity.errorMsg);
@@ -244,7 +250,7 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
 
   Future cancelCollect(int id) async {
     var collectResponse = await HttpUtil().post(Api.UN_COLLECT_ORIGIN_ID + '$id/json');
-    Map map = json.decode(collectResponse.toString());
+    Map<String, dynamic> map = json.decode(collectResponse.toString());
     var entity = CommonEntity.fromJson(map);
     if (entity.errorCode == -1001) {
       YToast.show(context: context, msg: entity.errorMsg);
@@ -259,12 +265,12 @@ class _TreeDetailPageState extends State<TreeDetailPage> with TickerProviderStat
   }
 
   Future getMoreData() async {
-    var data = {"cid": _tabDatas[_currentIndex].id};
+    var data = {"cid": _tabDatas[_currentIndex].id ?? 0};
     var response = await HttpUtil().get(Api.ARTICLE_LIST + "$_page/json", data: data);
-    Map articleMap = json.decode(response.toString());
+    Map<String, dynamic> articleMap = json.decode(response.toString());
     var articleEntity = ArticleEntity.fromJson(articleMap);
     setState(() {
-      articleDatas.addAll(articleEntity.data.datas);
+      articleDatas.addAll(articleEntity.data?.datas ?? []);
     });
   }
 

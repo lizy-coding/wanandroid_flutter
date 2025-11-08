@@ -1,9 +1,9 @@
-class CommonEntity {
+class CommonEntity<T> {
 	dynamic data;
-	int errorCode;
-	String errorMsg;
+	late int errorCode;
+	late String errorMsg;
 
-	CommonEntity({this.data, this.errorCode, this.errorMsg});
+	CommonEntity({this.data, required this.errorCode, required this.errorMsg});
 
 	CommonEntity.fromJson(Map<String, dynamic> json) {
 		data = json['data'];

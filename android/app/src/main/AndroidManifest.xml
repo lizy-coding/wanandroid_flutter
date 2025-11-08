@@ -1,7 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="wanandroid_flutter_migrated"
+        android:label="wanandroid_flutter"
         android:name="${applicationName}"
+        android:label="玩安卓"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
